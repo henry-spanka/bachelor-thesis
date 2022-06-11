@@ -301,5 +301,5 @@ TSWLatexianTemp*
 #*Notes.bib
 
 # Custom
+Chapters/build
 .DS_Store
-build/
