@@ -1,0 +1,26 @@
+% !TEX root = ../Main.tex
+\documentclass[../Main.tex]{subfiles}
+\begin{document}
+
+Zusätzlich zur Gewichtung von GPUs ist ein Stacking von Instanzen auf Basis des Arbeitsspeichers
+wünschenswert. Der Nova RAM Weigher verteilt die Instanzen standardgemä{\ss} so breit wie möglich \citep{NormalizedWeights}.
+Dies führt bei einer hohen Auslastung der OpenStack Cloud dazu, dass kein oder wenige Hosts Instanzen
+mit viel Arbeitsspeicher zur Verfügung stellen können.
+
+Wie in Kapitel \ref{chapter:Weigher} beschrieben wird jeder Weigher mit einem Multiplikator multipliziert. Dieser
+lässt sich entweder in der Nova Konfiguration oder über Host Aggregate Metadaten setzen.
+Über einen negativen Wert kann dabei ein Stacking anstatt Spreading erzielt werden \citep{ComputeSchedulers}.
+
+\subsection{Kombination von Multiplikatoren}
+
+Die optimale Allokierung von Instanzen auf Hosts lässt sich nicht immer vorhersagen.
+Jeder Host kann Arbeitsspeicher bereitstellen, jedoch verfügt nicht jeder Host über GPUs.
+Daher betrachten wir GPUs generell als die \glqq wertvollere\grqq{} Ressource.
+
+Über Multiplikator kann der GPU Weigher gegenüber dem RAM Weigher priorisiert werden. Setzen wir
+den Multiplikator des GPU Weighers auf $2.0$ und den des RAM Weighers auf $-1.0$, dann wird
+die GPU Ressource doppelt gewichtet. In Kombination mit anderen Weigher wie CPU oder Festplattenspeicher
+kann dann eine optimale Auslastung erzielt werden.
+
+\biblio % Needed for referencing to working when compiling individual subfiles - Do not remove
+\end{document}

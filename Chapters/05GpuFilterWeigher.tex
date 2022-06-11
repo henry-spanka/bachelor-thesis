@@ -1,0 +1,205 @@
+% !TEX root = ../Main.tex
+\documentclass[../Main.tex]{subfiles}
+\begin{document}
+\label{chapter:PCIPassthrough}
+
+In der de.NBI Cloud werden GPUs über die \textbf{PCI Passthrough} Funktionalität des Hypervisors
+in die Instanz durchgereicht. Dabei werden bestimmte Flavors mit Extra Specs versehen um PCI Ressourcen anzufordern:
+
+\begin{minted}[bgcolor=LightGray]
+{shell}
+openstack flavor set \
+--property "pci_passthrough:quadro"="quadro:2" $FLAVOR
+\end{minted}
+
+Im obigen Beispiel werden zwei PCI Geräte vom Typ Quadro angefordert. Der Alias muss
+dann zusätzlich in der Konfiguration der Nova Compute und API Dienste gesetzt werden \citep{AttachPciToGuests}.
+Vendor ID, ProductID und DeviceType sind dabei geräteabhängig und können mit dem Befehl \mintinline{shell}{lspci -nn} ausgelesen werden.
+Dabei ist es erforderlich, dass der Gerätetyp auch zu der Passthrough Whitelist des Hosts hinzugefügt wird.
+
+\begin{minted}[bgcolor=LightGray]
+{ini}
+[pci]
+alias = {
+    "vendor_id":"10de",
+    "product_id":"1cb3",
+    "device_type":"type-PCI",
+    "name":"quadro"
+}
+passthrough_whitelist = { "vendor_id": "10de", "product_id": "1cb3" }
+\end{minted}
+
+Der von Nova mitgelieferte PCIPassthrough Filter sorgt dafür, dass nur Hosts für
+das Scheduling in Betracht gezogen werden, welche auch die angeforderten PCI Ressourcen bereitstellen können \citep{PciPassthroughFilter}.
+Eine Gewichtung wird dabei nicht vorgenommen.
+
+\subsection{Scheduling in virtuellen Umgebungen}
+
+Aufgrund der Besonderheit des Schedulings von GPUs ist es nicht ohne weiteres möglich
+dies in einer virtuellen Testumgebung abzubilden. Der Aufbau einer Testumgebung basierend
+auf physischer Hardware wäre mit entsprechenden Aufwand und Kosten verbunden und erschwert den
+schnellen Aufbau einer Testumgebung. Wünschenswert wäre daher eine Implementierung die ein Scheduling
+in einer virtuellen Umgebung ermöglicht.
+
+\subsection{Virtueller GPU Filter}
+\label{chapter:GPUFilter}
+
+Zur Filterung der Hosts wird ein neuer Filter \textbf{GpuVirtualFilter} implementiert.
+
+\begin{table}[H]
+    \centering
+    \caption{Attribute des GPU Filters}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{lll}
+        \hline
+        \textbf{Attribut} & \textbf{Typ} & \textbf{Beschreibung} \\ 
+        \hline
+        enabled & bool & Aktiviert GPU Filter \\ 
+        model & string & GPU Name/Alias \\ 
+        count & integer & Anzahl an GPUs \\ 
+        \hline
+    \end{tabular}
+    \label{table:FilterAttributes}
+\end{table}
+
+Die neu definierten Attribute in Tabelle \ref{table:FilterAttributes} werden dabei vom Filter unter dem Scope \textbf{gpu\_filter} genutzt.
+
+Jeder Host mit verfügbaren Grafikeinheiten wird in ein Aggregate gruppiert und mit den Metadaten \textbf{model} (GPU Typ) und \textbf{count} (Anzahl vorhandender GPUs) versehen.
+
+Ein Flavor kann GPU Ressourcen anfordern in dem es die Extra Specs setzt:
+
+\begin{enumerate}
+    \item \textbf{enabled:} Aktivierung des GPU Filter
+    \item \textbf{model:} Angeforderter GPU Typ
+    \item \textbf{count:} Anzahl angeforderter GPUs
+\end{enumerate}
+
+Der Filter akzeptiert einen Host wenn mindestens eine Aussage wahr ist:
+
+\begin{enumerate}
+    \item Der Filter ist deaktiviert, d.h. Extra Spec \textbf{enabled} != True.
+    \item GPU Typ (\textbf{model}) von Flavor und Host identisch und
+    die Summe von Extra Spec \textbf{count} aller Instanzen und RequestSpec ist kleiner oder gleich der Host Metadata \textbf{count}.
+\end{enumerate}
+
+Physische GPUs sind dabei nicht notwendig. Die Filterung wird anhand von Attributen der Flavor und Host Aggregates vorgenommen.
+Über die Kombination des Flavors mit den in Kapitel \ref{chapter:PCIPassthrough} genannten Extra Specs werden dann die virtuellen Ressourcen
+an die physische Hardware gebunden.
+
+\subsection{Gleichzeitiges Scheduling mehrerer Instanzen}
+
+Der Nova Scheduler lässt sich unabhängig von einander mehrfach starten. Dies dient zum Beispiel der Lastverteilung
+und Redundanz. Dabei ist nicht garantiert, dass Instanzen sequenziell voneinander scheduled werden \citep{NovaScheduling}.
+Dadurch kann es passieren, dass ein Filter einen Host akzeptiert, jedoch vor der Allokierung der Instanz ein weiterer Nova Scheduler Prozess den selben
+Filter durchläuft und eine Allokierung auf dem selben Host vornimmt. Wenn der Filter in einer Entwicklungsumgebung
+ohne die Verknüpfung mit PCI Requests (Kapitel \ref{chapter:PCIPassthrough}) ausgeführt wird, führt dies zu
+Inkonsistenzen, da keine wirkliche Allokation von Ressourcen stattfindet. Im folgenden wird ein Ansatz vorgestellt, der auf einen virtuellen Filter verzichtet und stattdessen die Nova Placement API
+zur Allokierung nutzt.
+
+\subsection{GPU Ressourceklasse}
+\label{chapter:GPUResourceClass}
+
+Wie bereits in Kapitel \ref{chapter:PlacementAPI} beschrieben, wird die Allokierung von Hardwareressourcen vom Nova Placement
+Dienst verwaltet. Nova bietet dabei die Möglichkeit der Erweiterung um eigene Ressourceklassen mit dem Präfix \textbf{CUSTOM\_} \citep{NovaCustomResourceClasses}.
+
+Zur Erweiterung der Resource Provider werden standardgemä{\ss} vom Nova Compute Dienst Konfigurationsdateien im YAML-Format in dem Pfad \textbf{/etc/nova/provider\_config/} gelesen \citep{NovaConfigurationOptions}.
+
+Auf den Compute Nodes mit Unterstützung für GPU Ressourcen wird eine neue Ressourceklasse mit dem Namen \textbf{CUSTOM\_GPU} erstellt. Im Beispiel
+nehmen wir an, dass maximal 2 GPUs zur Verfügung stehen (total). Das Modell (Quadro) wird dabei über
+ein \textbf{Trait} abgebildet. Dies sind Eigenschaften der Ressourceklasse. Die weiteren Parameter sind für das GPU Scheduling nicht notwendig und können
+in der OpenStack Dokumentation eingesehen werden \citep{ProviderConfigFile}. Auch hier ist keine Präsenz von
+PCI Hardware notwendig. Die Verknüpfung mit GPUs erfolgt, identisch zum GPU Filter (Kapitel \ref{chapter:GPUFilter}), über PCI Requests mit Hilfe von
+Extra Specs des Flavors (Kapitel \ref{chapter:PCIPassthrough}).
+
+Ein weiterer Vorteil ist, dass die Nutzung der GPUs nun in einer eigenen Ressourceklasse überwacht wird und über die
+Placement API ausgelesen werden kann. Daneben ist die Allokierung auch in Testumgebungen atomar und konsistent.
+
+\begin{minted}[bgcolor=LightGray]
+{yaml}
+# /etc/nova/provider_config/gpu.yaml
+meta:
+  schema_version: '1.0'
+providers:
+  - identification:
+      uuid: $COMPUTE_NODE
+    inventories:
+      additional:
+        - CUSTOM_GPU:
+            total: 2
+            reserved: 0
+            min_unit: 1
+            max_unit: 10
+            step_size: 1
+            allocation_ratio: 1.0
+    traits:
+      additional:
+        - 'CUSTOM_GPU_QUADRO'
+\end{minted}
+
+Die Ressourceklasse kann dann in den Extra Specs des Flavors angefordert werden.
+
+Dafür wird ein Attribut im Format resources:\$CUSTOM\_RESOURCE\_CLASS=\$N hinzugefügt \citep{CustomResourceClassesInExtraSpecs}.
+Zur Anforderung von 2 GPUs nutzen wir daher resource:CUSTOM\_GPU=2.
+
+Die Ressourceklasse unterscheidet nicht zwischen verschiedenen GPU-Typen. Die Erzwingung eines
+bestimmten Typen (hier Quadro) ist mit dem Extra Spec trait:CUSTOM\_GPU\_QUADRO=required möglich \citep{RequestTraitsInNova}.
+
+\subsection{Gewichtung}
+
+In den Kapitel \ref{chapter:GPUFilter} und \ref{chapter:GPUResourceClass} wurden zwei verschiedene Ansätze
+zur Filterung von GPU Ressourcen vorgestellt. Dabei wurde bisher keine Gewichtung berücksichtigt.
+
+Dazu wird ein neuer GPU Weigher \textbf{GpuVirtualWeigher} implementiert.
+
+\begin{table}[H]
+    \centering
+    \caption{Attribute des GPU Weighers}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{lll}
+        \hline
+        \textbf{Attribut} & \textbf{Typ} & \textbf{Beschreibung} \\ 
+        \hline
+        enabled & bool & Aktiviert GPU Weigher \\ 
+        mode & enum (stack,spread) & Art der Gewichtung \\ 
+        resource & string & Resource/Extra Spec der gewichtet werden soll \\ 
+        \hline
+    \end{tabular}
+    \label{table:WeigherAttributes}
+\end{table}
+
+Die in Tabelle \ref{table:WeigherAttributes} definierten Attribute werden vom Weigher
+unter dem Scope \textbf{gpu\_weigher} genutzt. Ein zu gewichtenes Flavor muss dabei alle Attribute
+definieren.
+
+Ist der Weigher deaktiviert, d.h. Extra Spec \textbf{enabled} != True, dann wird der Weigher ignoriert ($w = 0$).
+Andernfalls summiere den Wert des Extra Spec \textbf{resource} aller Instanzen des Hosts. Dieser gibt
+an wie viele GPUs aktuell auf dem Host verwendet werden.
+
+Über das Attribut \textbf{mode} kann ein Stacking oder Spreading der Instanzen erreicht werden. Beim Stacking
+ist dabei das Gewicht identisch zu der Anzahl der genutzten GPUs. Ist ein Spreading gewünscht,
+dann wir das Gewicht negiert. Dadurch wird das Gewicht eines Hosts dann reduziert je mehr GPUs des Hosts bereits
+verwendet werden. Dies kann auch genutzt werden um Instanzen ohne GPU Anforderung von GPU-fähigen Hosts fernzuhalten.
+
+\begin{table}[H]
+  \centering
+  \caption{Beispiel einer Gewichtung}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabular}{|p{3cm}|p{4cm}|c|c|c|c|}
+    \hline
+    \multirow{2}{3cm}{\textbf{Host}} & \multirow{2}{4cm}{\textbf{Genutzte GPUs}} & \multicolumn{2}{c|}{\textbf{Stacking}} & \multicolumn{2}{c|}{\textbf{Spreading}} \\
+    \cline{3-6}
+    & & \textbf{$w$} & \textbf{$norm(w)$} & \textbf{$w$} & \textbf{$norm(w)$} \\
+    \hline
+    compute1 & 3 & 3 & 1\phantom{.00} & -3 & 0\phantom{.00} \\ \hline
+    compute2 & 2 & 2 & 0.66 & -2 & 0.33 \\ \hline
+    compute3 & 1 & 1 & 0.33 & -1 & 0.66 \\ \hline
+    compute4 & 0 & 0 & 0\phantom{.00} & \phantom{-}0 & 1\phantom{.00} \\ \hline
+  \end{tabular}
+  \label{table:WeighingExample}
+\end{table}
+
+Durch die Normierung werden die Hosts zwischen 0 und 1 gewichtet. Über den Multiplikator kann dann das Gewicht
+des Weighers verstärkt oder abgeschwächt werden.
+
+\biblio % Needed for referencing to working when compiling individual subfiles - Do not remove
+\end{document}

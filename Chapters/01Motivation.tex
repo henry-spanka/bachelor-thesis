@@ -1,0 +1,24 @@
+% !TEX root = ../Main.tex
+\documentclass[../Main.tex]{subfiles}
+\begin{document}
+
+Das de.NBI (Deutsches Netzwerk für Bioinformatik) stellt eine Cloud-Lösung für Bioinformatik an mehreren Standorten in Deutschland zur Verfügung \citep{deNBI}.
+Einer dieser Standorte ist am CeBiTec an der Universität Bielefeld angesiedelt.
+Im Fokus steht dabei mikrobielle Genetik und Metagenomik. Dabei werden gro{\ss}e Datenmengen
+in der Cloud analysiert wie zum Beispiel die Oxford Nanopore Sequenzdaten.
+
+In Bielefeld werden dafür neben standardisierten Instanzen, auch sogenannte \glqq high memory\grqq{} Instanzen mit mehr
+lokalen Speicherplatz (bis zu 2 TB RAM und 5 TB Festplatte) angeboten. Für hardware-beschleunigte
+Instanzen, die Anwendungen im Bereich maschinelles Lernen ausführen, werden spezielle virtuelle Maschinen
+mit Grafikkarten (GPUs) bereitgestellt.
+
+Derzeit findet keine Priorisierung der Hardwareanforderungen dieser Instanzen statt. Dabei kann es zu einer nicht optimalen
+Verteilung der Hardware-Ressourcen kommen. Standardisierte oder high memory Instanzen werden
+auf Hypervisor erstellt auf denen Grafikprozessoren zur Verfügung stehen, wodurch nicht mehr ausreichend CPU-, RAM- und Festplattenressourcen
+vorhanden sind um GPU-basierte Instanzen auszuführen.
+
+Ziel dieser Arbeit ist es die Zuweisung der Instanzen an Hypervisor entsprechend zu optimieren, damit möglichst viele Instanzen
+ausgeführt werden können.
+
+\biblio % Needed for referencing to working when compiling individual subfiles - Do not remove
+\end{document}

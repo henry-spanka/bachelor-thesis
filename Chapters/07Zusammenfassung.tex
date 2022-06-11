@@ -1,0 +1,26 @@
+% !TEX root = ../Main.tex
+\documentclass[../Main.tex]{subfiles}
+\begin{document}
+
+Ziel der Bachelorarbeit war die Optimierung der Allokierung von Grafikprozessoren in der de.NBI Cloud.
+Ein besonderes Augenmerk wurde auf die Unabhängigkeit von physischer Hardware gelegt, um
+eine Entwicklung in Testumgebungen zu ermöglichen.
+Dabei wurden Grundlagen zur Entwicklung von Filtern und Weigher zur Optimierung
+von Ressourcen aufgezeigt und zwei Lösungsansätze vorgestellt.
+Die Nutzung einer Ressourcenklasse in Kombination mit einem Weigher hat dabei alle Anforderungen
+erfüllt und lässt sich leicht auch auf andere Ressourcen übertragen.
+
+Die Bachelorarbeit dient dabei auch als Grundlage für weitere Anpassungen des Scheduling der de.NBI Cloud.
+Besonders ist aktuell eine Einschränkung der Anzahl von GPUs pro Projekt nicht möglich. Dadurch kann ein
+Nutzer der Cloud mehr GPUs anfordern als gewünscht. Nova unterstützt keine Erweiterung der Projekt Quotas,
+bietet aber eine experimentelle Implementierung der Unified Limits an \citep{UnifiedLimits}. Die de.NBI Cloud
+nutzt zum heutigen Stand den Train Release und unterstützt keine Unified Limits, die erst im Yoga Release eingeführt wurden.
+
+Eine spätere Implementierung von Filtern oder Ressourceklassen in Kombination mit Unified Limits
+wäre wünschenswert um die Anzahl der GPUs pro Nutzer einzuschränken. Dabei bietet sich auch eine Erweiterung
+des Perun Keystone Adapters der de.NBI Cloud an, um Unified Limits mit der Identitäts- und Zugriffsverwaltung
+Perun zu synchronisieren.
+
+\biblio % Needed for referencing to working when compiling individual subfiles - Do not remove
+\end{document}
+

@@ -1,0 +1,67 @@
+% !TEX root = ../Main.tex
+\documentclass[../Main.tex]{subfiles}
+\begin{document}
+
+Wie bereits im vorherigen Kapitel beschrieben bietet sich Kolla zum Deployment
+von OpenStack Umgebungen an. Dabei können die einzelnen Dienste modular bereitgestellt werden \citep{KollaAnsible}.
+
+Für die Entwicklung von OpenStack Nova Filter und Weigher werden dabei folgende Dienste benötigt:
+
+\begin{itemize}
+    \item Glance
+    \item Horizon
+    \item Keystone
+    \item Neutron
+    \item Nova
+\end{itemize}
+
+Kolla installiert und konfiguriert in der Standardkonfiguration alle oben genannten notwendigen Dienste.
+Darüber hinaus lassen sich alle Konfigurationsdateien anpassen und eigene Pakete installieren welche
+für die Erweiterung des Nova Schedulers notwendig sind \citep{KollaAnsible}.
+
+\subsection{Anforderungen}
+
+Kolla setzt auf Ansible Playbooks für das automatische Deployment.
+
+Es werden die folgenden Betriebssysteme unterstützt \citep{KollaSupportMatrix}:
+
+\begin{itemize}
+    \item CentOS Stream 8
+    \item Debian Bullseye (11)
+    \item openEuler 20.03 LTS SP2
+    \item RHEL 8 (veraltet)
+    \item Rocky Linux 8
+    \item Ubuntu Focal (20.04)
+\end{itemize}
+
+Daneben bietet Kolla die Abbilder der OpenStack Dienste in mehreren Varianten an \citep{KollaSupportMatrix}:
+
+\begin{itemize}
+    \item CentOS
+    \item Debian
+    \item RHEL
+    \item Ubuntu
+\end{itemize}
+
+Als Betriebssystem für die Entwicklungsumgebung im Rahmen dieser Bachelorarbeit wurde Ubuntu Focal (20.04) zusammen mit Ubuntu Abbilder
+der OpenStack Dienste genutzt. Kolla und die OpenStack Dienste basieren auf dem Yoga Release der am 30. März 2022 veröffentlich wurde \citep{OpenstackYogaRelease}.
+
+Für eine \textbf{all-in-one} Standard-Installation von OpenStack werden mindestens \textbf{2 Netzwerkschnittstellen},
+\textbf{8 GB RAM} und \textbf{40 GB Festplattenspeicher} benötigt \citep{KollaQuickStart}.
+
+Zur sinnvollen Erweiterung des Nova Schedulers werden jedoch mindestens zwei Nova Compute Nodes benötigt.
+Ein Weighing einer einzelnen Node wäre trivial. Als Entwicklungsumgebung wird daher ein \textbf{multinode}
+Deployment bestehend aus einer Controller-, mindestens zwei Compute- und einer Deployment Node verwendet.
+Alle Nodes können dabei als Virtuelle Maschinen betrieben werden. Die Anforderungen des Controllers orientieren
+sich dabei an denen einer \textbf{all-in-one} Installation. Die Compute Nodes müssen den individuellen Anforderungen
+genügen und benötigen ebenfalls zwei Netzwerkschnittstellen.
+
+OpenStack Kolla nutzt dabei eine Schnittstelle für die Verwaltung und Konfiguration der Cloud Dienste.
+Die weitere Netzwerkschnittstelle wird von OpenStack Neutron zur Bereitstellung von Netzwerkdiensten der Instanzen benötigt.
+
+Für diese Bachelorarbeit wurden Droplets (Virtuelle Maschinen) vom Anbieter DigitalOcean genutzt. Diese
+werden standardgemä{\ss} bereits mit zwei Netzwerkschnittstellen ausgeliefert weshalb hier keine weitere
+Konfiguration notwendig ist.
+
+\biblio % Needed for referencing to working when compiling individual subfiles - Do not remove
+\end{document}
