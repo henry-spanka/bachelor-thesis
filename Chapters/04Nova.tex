@@ -54,7 +54,7 @@ Das Gewicht eines Hosts berechnet sich aus \citep{NormalizedWeights}:
     $weight = m_1 * norm(w_1) + m_2 * norm(w_2) + ...$
 \end{center}
 Dabei ist $w_i$ das Gewicht und $m_i$ der Multiplikator des \textbf{Weigher} $i$. Das Gewicht
-$w_i$ wird dabei zwischen $0$ und $1$ normalisiert. Über den Multiplikator lässt sich der Einfluss
+$w_i$ wird zwischen $0$ und $1$ normalisiert. Über den Multiplikator lässt sich der Einfluss
 bestimmter \textbf{Weigher} ändern. Ist $w_i = 0$ oder $m_i= 0$, dann nimmt der Weigher keinen Einfluss
 auf die Gewichtung.
 
@@ -68,16 +68,16 @@ auf die Gewichtung.
 \label{chapter:PlacementAPI}
 
 Nach erfolgter Gewichtung versucht der Nova Scheduler die Ressourcen des \textbf{Request Spec} auf dem Host mit
-dem höchsten Gewicht zu allokieren. Die einzelnen Ressourcetypen werden dabei als sogenannte \textbf{Classes} verwaltet \citep{PlacementDocs}.
+dem höchsten Gewicht zu allokieren. Die einzelnen Ressource-Typen werden dabei als sogenannte \textbf{Classes} verwaltet \citep{PlacementDocs}.
 Dies sind zum Beispiel \textbf{VCPU}, \textbf{{MEMORY\_MB}} und \textbf{{DISK\_GB}}. Erst wenn diese
-Allokierung erfolgreich ist, wird die Instanz auf dem Host erstellt. Schlägt die Allokierung oder Erstellung, sogenanntes \textbf{Spawning}, fehl wird versucht
+Allokation erfolgreich ist, wird die Instanz auf dem Host erstellt. Schlägt die Allokation oder Erstellung, sogenanntes \textbf{Spawning}, fehl wird versucht
 die Instanz auf dem Host mit dem nächstkleineren Gewicht zu erstellen.
 
 \subsubsection{Metadata und Extra Specs}
 
 Nova bietet zusätzlich die Möglichkeit Metadaten an Hosts oder sogenannte Extra Specs an Flavor zu setzen. Ein Flavor definiert
 dabei eine bestimmte Hardwarekonfiguration einer Instanz \citep{FlavorDocs}. Die Daten werden dann vom Nova Scheduler
-oder eigenen Filter und Weigher genutzt. Das Extra Spec \textbf{quota:vif\_outbound\_peak=65536} beschränkt zum Beispiel die maximale ausgehende Netzwerk-Übertragungsrate auf 512 Mbit/s.
+oder eigenen Filter und Weigher genutzt. Der Extra Spec \textbf{quota:vif\_outbound\_peak=65536} beschränkt zum Beispiel die maximale ausgehende Netzwerk-Übertragungsrate auf 512 Mbit/s.
 
 \subsubsection{Erweiterung des Nova Schedulers}
 
@@ -105,7 +105,7 @@ wird im folgenden Beschrieben.
 Dadurch werden Hosts mit mehr Instanzen priorisiert (Stacking).
 Über die Metadata der Host Aggregates (instance\_count\_weight\_multiplier) kann dann die Wichtigkeit
 des Weighers bestimmt werden. Ein Aggregate ist dabei eine Gruppierung von Hosts
-die gemeinsame Eigenschaften besitzen. Ein negatives Gewicht führt dabei zu einem
+die gemeinsame Eigenschaften besitzen. Ein negatives Gewicht führt zu einem
 Spreading, daher die Instanzen werden möglichst breit auf den Hosts verteilt.
 
 \begin{minted}[bgcolor=LightGray]
@@ -128,7 +128,7 @@ class InstanceCountWeigher(weights.BaseHostWeigher):
 \end{minted}
 
 Darüber hinaus kann ebenfalls im Filter und Weigher auf Metadata und Extra Specs zugegriffen werden.
-Ein Zugriff auf das Attribut \textbf{customscope:someattribute} ist Beispielsweise so möglich:
+Ein Zugriff auf den Extra Spec \textbf{customscope:someattribute} ist beispielsweise so möglich:
 
 \begin{minted}[bgcolor=LightGray]
 {python}
@@ -137,9 +137,9 @@ value = request_spec.flavor.extra_specs.get('customscope:someattribute')
 
 Seit dem OpenStack Release Ussuri und der Compute API Version 2.86 unterstützt Nova
 die Validierung von Flavor Extra Specs \citep{ExtraSpecsValidation}. Horizon nutzt aktuell
-eine ältere Version der API weshalb dort die Validierung nicht erfolgt. Die Validierung muss
-aktiv vom Client angefordert werden in dem eine entsprechende API Version genutzt wird. Mit
-der OpenStack CLI ist das Beispielsweise wie folgt möglich:
+eine ältere Version der API, weshalb dort die Validierung nicht erfolgt. Die Validierung muss
+aktiv vom Client angefordert werden, in dem eine entsprechende API Version genutzt wird. Mit
+der OpenStack CLI ist das beispielsweise wie folgt möglich:
 
 \begin{minted}[bgcolor=LightGray]
 {shell}

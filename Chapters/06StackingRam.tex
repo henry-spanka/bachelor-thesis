@@ -13,14 +13,14 @@ lässt sich entweder in der Nova Konfiguration oder über Host Aggregate Metadat
 
 \subsection{Kombination von Multiplikatoren}
 
-Die optimale Allokierung von Instanzen auf Hosts lässt sich nicht immer vorhersagen.
+Die optimale Allokation von Instanzen auf Hosts lässt sich nicht immer vorhersagen.
 Jeder Host kann Arbeitsspeicher bereitstellen, jedoch verfügt nicht jeder Host über GPUs.
 Daher betrachten wir GPUs generell als die \glqq wertvollere\grqq{} Ressource.
 
-Über Multiplikator kann der GPU Weigher gegenüber dem RAM Weigher priorisiert werden. Setzen wir
+Über den Multiplikator kann der GPU Weigher gegenüber dem RAM Weigher priorisiert werden. Setzen wir
 den Multiplikator des GPU Weighers auf $2.0$ und den des RAM Weighers auf $-1.0$, dann wird
-die GPU Ressource doppelt gewichtet. In Kombination mit anderen Weigher wie CPU oder Festplattenspeicher
-kann dann eine optimale Auslastung erzielt werden.
+die GPU Ressource doppelt gewichtet und ein Stacking erzielt. In Kombination mit anderen Weigher, wie CPU oder Festplattenspeicher,
+kann dann eine optimale Auslastung der Cloud erreicht werden.
 
 \biblio % Needed for referencing to working when compiling individual subfiles - Do not remove
 \end{document}
