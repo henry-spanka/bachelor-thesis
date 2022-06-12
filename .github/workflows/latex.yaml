@@ -13,3 +13,7 @@ jobs:
           latexmk_use_xelatex: true
           latexmk_shell_escape: true
           args: -file-line-error -halt-on-error -interaction=nonstopmode -recorder -output-directory=build
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Thesis
+          path: build/Main.pdf
