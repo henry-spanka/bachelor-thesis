@@ -12,4 +12,4 @@ jobs:
           root_file: Main.tex
           latexmk_use_xelatex: true
           latexmk_shell_escape: true
-          args: -file-line-error -halt-on-error -interaction=nonstopmode -recorder -output-directory="build"
+          args: -file-line-error -halt-on-error -interaction=nonstopmode -recorder -output-directory=build
