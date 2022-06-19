@@ -37,8 +37,8 @@ Eine Gewichtung wird dabei nicht vorgenommen.
 
 Aufgrund der Besonderheit des Scheduling von GPUs, ist es nicht ohne weiteres möglich
 dies in einer virtuellen Testumgebung abzubilden. Der Aufbau einer Testumgebung basierend
-auf physischer Hardware wäre mit entsprechendem Aufwand und Kosten verbunden und erschwert den
-schnellen Aufbau einer Testumgebung. Wünschenswert wäre daher eine Implementierung die ein Scheduling
+auf physischer Hardware wäre mit entsprechendem Aufwand und Kosten verbunden, erschwert einen effizienten Aufbau
+und lässt kein paralleles Arbeiten zu. Wünschenswert wäre daher eine Implementierung die ein Scheduling
 in einer virtuellen Umgebung ermöglicht.
 
 \subsection{Virtueller GPU Filter}
@@ -74,7 +74,7 @@ Ein Flavor kann GPU Ressourcen anfordern in dem es die Extra Specs setzt:
     \item \textbf{count:} Anzahl angeforderter GPUs
 \end{enumerate}
 
-Der Filter akzeptiert einen Host wenn mindestens eine Aussage wahr ist:
+Der Filter akzeptiert einen Host, wenn mindestens eine Aussage wahr ist:
 
 \begin{enumerate}
     \item Der Filter ist deaktiviert, d.h. Extra Spec \textbf{enabled} != True.
@@ -102,7 +102,9 @@ zur Allokation nutzt.
 Wie bereits in Kapitel \ref{chapter:PlacementAPI} beschrieben, wird die Allokation von Hardwareressourcen vom Nova Placement
 Dienst verwaltet. Nova bietet dabei die Möglichkeit der Erweiterung um eigene Ressourceklassen mit dem Präfix \textbf{CUSTOM\_} \citep{NovaCustomResourceClasses}.
 
-Zur Erweiterung der Resource Provider werden standardgemä{\ss} vom Nova Compute Dienst Konfigurationsdateien im YAML-Format unter dem Pfad \textbf{/etc/nova/provider\_config/} eingelesen \citep{NovaConfigurationOptions}.
+Zur Erweiterung der Resource Provider werden standardgemä{\ss}, unter dem Pfad \textbf{/etc/nova/provider\_config/}, Konfigurationsdateien im YAML-Format vom Nova Compute Dienst 
+eingelesen \citep{NovaConfigurationOptions}. Die Ressourceklassen werden dann
+automatisch dem Placement Dienst mitgeteilt.
 
 Auf den Compute Nodes mit Unterstützung für GPU Ressourcen wird eine neue Ressourceklasse mit dem Namen \textbf{CUSTOM\_GPU} erstellt. Im Beispiel
 nehmen wir an, dass maximal 2 GPUs zur Verfügung stehen (total). Das Modell (Quadro) wird dabei über
@@ -138,11 +140,11 @@ providers:
 
 Die Ressourceklasse kann in den Extra Specs des Flavors angefordert werden.
 
-Dafür wird ein Attribut im Format resources:\$CUSTOM\_RESOURCE\_CLASS=\$N hinzugefügt \citep{CustomResourceClassesInExtraSpecs}.
-Zur Anforderung von 2 GPUs setzen wir den Extra Spec resources:CUSTOM\_GPU=2.
+Dafür wird ein Extra Spec \textbf{resources:\$CUSTOM\_RESOURCE\_CLASS=\$N} zum Flavor hinzugefügt \citep{CustomResourceClassesInExtraSpecs}.
+Zur Anforderung von 2 GPUs setzen wir den Extra Spec \textbf{resources:CUSTOM\_GPU=2}.
 
-Die Ressourceklasse unterscheidet nicht zwischen verschiedenen GPU-Typen. Die Erzwingung eines
-bestimmten Typen (hier Quadro) ist mit dem Extra Spec trait:CUSTOM\_GPU\_QUADRO=required möglich \citep{RequestTraitsInNova}.
+Die Ressourceklasse unterscheidet nicht zwischen verschiedenen Typen von GPUs. Die Erzwingung eines
+bestimmten Typen (hier Quadro) ist mit dem Extra Spec \textbf{trait:CUSTOM\_GPU\_QUADRO=required} möglich \citep{RequestTraitsInNova}.
 
 \subsection{Gewichtung}
 
@@ -160,16 +162,16 @@ Dazu wird ein neuer GPU Weigher \textbf{GpuVirtualWeigher} implementiert.
         \textbf{Attribut} & \textbf{Typ} & \textbf{Beschreibung} \\ 
         \hline
         enabled & bool & Aktiviert GPU Weigher \\ 
-        mode & enum (stack,spread) & Art der Gewichtung \\ 
+        mode & enum (stack, spread) & Art der Gewichtung \\ 
         resource & string & Resource/Extra Spec der gewichtet werden soll \\ 
         \hline
     \end{tabular}
     \label{table:WeigherAttributes}
 \end{table}
 
-Die in Tabelle \ref{table:WeigherAttributes} definierten Attribute werden vom Weigher
+Die in Tabelle \ref{table:WeigherAttributes} definierten Attribute werden vom GPU Weigher
 unter dem Scope \textbf{gpu\_weigher} genutzt. Ein Flavor, dass gewichtet wird, muss dabei alle Attribute
-definieren.
+im Extra Spec konfigurieren.
 
 Ist der Weigher deaktiviert, daher Extra Spec \textbf{enabled} != True, dann hat der Weigher keinen Einfluss auf die Gewichtung ($w = 0$).
 Andernfalls summiere den Wert des Extra Spec \textbf{resource} aller Instanzen des Hosts. Dieser gibt
@@ -191,10 +193,10 @@ verwendet werden. Dies kann auch genutzt werden um Instanzen ohne GPU Anforderun
     \cline{3-6}
     & & \textbf{$w$} & \textbf{$norm(w)$} & \textbf{$w$} & \textbf{$norm(w)$} \\
     \hline
-    compute1 & 3 & 3 & 1\phantom{.00} & -3 & 0\phantom{.00} \\ \hline
-    compute2 & 2 & 2 & 0.66 & -2 & 0.33 \\ \hline
-    compute3 & 1 & 1 & 0.33 & -1 & 0.66 \\ \hline
-    compute4 & 0 & 0 & 0\phantom{.00} & \phantom{-}0 & 1\phantom{.00} \\ \hline
+    compute1 & 3 & 3 & \phantom{$\approx$} 1\phantom{.00} & -3 & \phantom{$\approx$} 0\phantom{.00} \\ \hline
+    compute2 & 2 & 2 & $\approx$ 0.66 & -2 & $\approx$ 0.33 \\ \hline
+    compute3 & 1 & 1 & $\approx$ 0.33 & -1 & $\approx$ 0.66 \\ \hline
+    compute4 & 0 & 0 & \phantom{$\approx$} 0\phantom{.00} & \phantom{-}0 & \phantom{$\approx$} 1\phantom{.00} \\ \hline
   \end{tabular}
   \label{table:WeighingExample}
 \end{table}

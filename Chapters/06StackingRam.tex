@@ -4,7 +4,7 @@
 
 Zusätzlich zur Gewichtung von GPUs ist ein Stacking von Instanzen auf Basis des Arbeitsspeichers
 wünschenswert. Der Nova RAM Weigher verteilt die Instanzen standardgemä{\ss} so breit wie möglich \citep{NormalizedWeights}.
-Dies führt bei einer hohen Auslastung der OpenStack Cloud dazu, dass kein oder wenige Hosts Instanzen
+Dies führt bei einer hohen Auslastung der OpenStack Cloud dazu, dass keine oder wenige Hosts Instanzen
 mit viel Arbeitsspeicher zur Verfügung stellen können.
 
 Wie in Kapitel \ref{chapter:Weigher} beschrieben wird jeder Weigher mit einem Multiplikator multipliziert. Dieser
@@ -19,8 +19,33 @@ Daher betrachten wir GPUs generell als die \glqq wertvollere\grqq{} Ressource.
 
 Über den Multiplikator kann der GPU Weigher gegenüber dem RAM Weigher priorisiert werden. Setzen wir
 den Multiplikator des GPU Weighers auf $2.0$ und den des RAM Weighers auf $-1.0$, dann wird
-die GPU Ressource doppelt gewichtet und ein Stacking erzielt. In Kombination mit anderen Weigher, wie CPU oder Festplattenspeicher,
-kann dann eine optimale Auslastung der Cloud erreicht werden.
+die GPU Ressource doppelt gewichtet und ein Stacking erzielt.
+Wie in Tabelle \ref{table:CombinedWeighingExample} gezeigt, hat der Host compute2 nun
+das höchste Gewicht.
+
+\begin{table}[H]
+    \centering
+    \caption{Beispiel einer Kombination von GPU- und RAM-Weigher}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{|p{1.75cm}|p{1.75cm}|p{1.75cm}|c|c|c|c|p{2cm}|}
+      \hline
+      \multirow{2}{1.75cm}{\textbf{Host}} & \multirow{2}{1.75cm}{\textbf{GPUs} (genutzt)}
+      & \multirow{2}{1.75cm}{\textbf{RAM} (frei MB)}
+      & \multicolumn{2}{c|}{\textbf{GPUWeigher}}
+      & \multicolumn{2}{c|}{\textbf{RAMWeigher}}
+      & \multirow{2}{2cm}{$\sum_i m_i * w_i$} \\
+      \cline{4-7} & & & \textbf{$w$} & \textbf{$norm(w)$} & \textbf{$w$} & \textbf{$norm(w)$} & \\
+      \hline
+      compute1 & 3 & 8192 & 3 & \phantom{$\approx$} 1\phantom{.00} & 8192 & \phantom{$\approx$} 1\phantom{.00} & \phantom{$\approx$} \phantom{-}1 \\ \hline
+      compute2 & 2 & 2048 & 2 & $\approx$ 0.66 & 2048 & $\approx$ 0.14 & $\approx$ \phantom{-}1.18 \\ \hline
+      compute3 & 1 & 1024 & 1 &  $\approx$ 0.33 & 1024 & \phantom{$\approx$} 0\phantom{.00} & $\approx$ \phantom{-}0.66 \\ \hline
+      compute4 & 0 & 4096 & 0 & \phantom{$\approx$} 0\phantom{.00} & 4096 & $\approx$ 0.43 & $\approx$ -0.43 \\ \hline
+    \end{tabular}
+    \label{table:CombinedWeighingExample}
+  \end{table}
+
+In Kombination mit anderen Weigher, wie CPU oder Festplattenspeicher,
+kann damit eine annähernd optimale Auslastung der Cloud erreicht werden.
 
 \biblio % Needed for referencing to working when compiling individual subfiles - Do not remove
 \end{document}

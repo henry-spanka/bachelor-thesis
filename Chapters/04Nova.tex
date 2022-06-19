@@ -47,7 +47,7 @@ für das Scheduling der Instanz betrachtet.
 \subsubsection{Weigher}
 \label{chapter:Weigher}
 
-Danach werden die akzeptierten Hosts mit sogenannten \textbf{Weigher} gewichtet und sortiert.
+Nach dem Filter werden die akzeptierten Hosts mit sogenannten \textbf{Weigher} gewichtet und sortiert.
 
 Das Gewicht eines Hosts berechnet sich aus \citep{NormalizedWeights}:
 \begin{center}
@@ -100,8 +100,8 @@ class SingleInstancePerRequestFilter(filters.BaseHostFilter):
         return request_spec.num_instances == 1
 \end{minted}
 
-Eine Implementierung eines Weighers der einen Host anhand seiner Instanzen gewichtet
-wird im folgenden Beschrieben.
+Eine Implementierung eines Weighers, der einen Host anhand seiner Instanzen gewichtet,
+wird im folgenden beschrieben.
 Dadurch werden Hosts mit mehr Instanzen priorisiert (Stacking).
 Über die Metadata der Host Aggregates (instance\_count\_weight\_multiplier) kann dann die Wichtigkeit
 des Weighers bestimmt werden. Ein Aggregate ist dabei eine Gruppierung von Hosts
@@ -148,9 +148,9 @@ openstack --os-compute-api-version 2.86 flavor set \
 \end{minted}
 
 Für die Validierung von eigenen Scopes und Attributen kann ein
-Validator implementiert werden \citep{ComputeSchedulers}. Dieser muss unter
-dem Python Entrypoint \textbf{nova.api.extra\_spec\_validator} registriert werden und für
-den Dienst Nova API sichtbar sein.
+Validator in Nova implementiert werden \citep{ComputeSchedulers}. Dieser muss unter
+dem Python Entrypoint \textbf{nova.api.extra\_spec\_validator} registriert werden und wird dann von
+Nova ab Compute API Version 2.86 automatisch verwendet.
 
 
 \begin{minted}[bgcolor=LightGray]
